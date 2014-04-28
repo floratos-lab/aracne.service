@@ -18,7 +18,7 @@
                   </execution>
              </executions>
              <configuration>
-                 <schemaDirectory>src/main/webapp/WEB-INF</schemaDirectory>
+                 <schemaDirectory>aracne-server/src/main/webapp/WEB-INF</schemaDirectory>
                   <packageName>org.geworkbench.service.aracne.schema</packageName>
              </configuration>
          </plugin>
