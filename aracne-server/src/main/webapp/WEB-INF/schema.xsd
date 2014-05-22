@@ -6,6 +6,10 @@
     <element name="ExecuteAracneRequest" type="tns:AracneInput"/>
 
     <element name="ExecuteAracneResponse" type="tns:AracneOutput"/>
+    
+    <element name="ExecuteAracneConfigRequest" type="tns:AracneInput"/>
+
+    <element name="ExecuteAracneConfigResponse" type="tns:AracneConfig"/>
 
     <complexType name="AracneInput">
         <sequence>
@@ -40,6 +44,14 @@
         <sequence>
 	        <element name="adjName" type="string"/>
 	        <element name="adjFile" type="base64Binary" xmime:expectedContentTypes="application/octet-stream"/>
+        </sequence>
+    </complexType>
+
+    <complexType name="AracneConfig">
+        <sequence>
+	        <element name="name" type="string"/>
+	        <element name="kernel" type="float" minOccurs="2" maxOccurs="2"/>
+	        <element name="threshold" type="float" minOccurs="3" maxOccurs="3"/>
         </sequence>
     </complexType>
 

@@ -4,6 +4,7 @@ import java.rmi.RemoteException;
 
 import javax.xml.bind.JAXBElement;
 
+import org.geworkbench.service.aracne.schema.AracneConfig;
 import org.geworkbench.service.aracne.schema.AracneInput;
 import org.geworkbench.service.aracne.schema.AracneOutput;
 import org.geworkbench.service.aracne.schema.ObjectFactory;
@@ -37,6 +38,19 @@ public class AracneInputRepositoryEndpoint {
        	output = aracneInputRepository.execute(runId, request.getBootstrapNumber());
         
         return objectFactory.createExecuteAracneResponse(output);
+    }
+
+    @PayloadRoot(localPart = "ExecuteAracneConfigRequest", namespace = "http://www.geworkbench.org/service/aracne")
+    @ResponsePayload
+    public JAXBElement<AracneConfig> executeAracneConfig(@RequestPayload JAXBElement<AracneInput> requestElement) throws RemoteException {
+        AracneConfig output = new AracneConfig();
+    	AracneInput request = requestElement.getValue();
+
+        String runId = aracneInputRepository.storeConfigInput(request);
+        
+       	output = aracneInputRepository.executeConfig(runId);
+        
+        return objectFactory.createExecuteAracneConfigResponse(output);
     }
 
 }

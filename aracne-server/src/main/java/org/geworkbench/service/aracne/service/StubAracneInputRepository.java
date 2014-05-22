@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,6 +12,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.Random;
 
 import javax.activation.DataHandler;
@@ -19,43 +21,48 @@ import javax.activation.FileDataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.geworkbench.service.aracne.schema.AracneConfig;
 import org.geworkbench.service.aracne.schema.AracneInput;
 import org.geworkbench.service.aracne.schema.AracneOutput;
 
 
 public class StubAracneInputRepository implements AracneInputRepository {
-    private static final Log    log = LogFactory.getLog(StubAracneInputRepository.class);
-	private static final String ARACNEROOT = "/ifs/data/c2b2/af_lab/cagrid/r/aracne/runs/";
-	private static final String ARACNEBIN = "/ifs/data/c2b2/af_lab/cagrid/r/aracne/bin/";
-	private static final String account = "cagrid";
-	private static final String adjsDir= "adjfiles";
-	private static final String logsDir  = "logs";
-    private static final String aracneLog = "aracne.log";
-    private static final String consensusLog = "consensus.log";
-    private static final String hubFile = "hub.txt";
-    private static final String targetFile = "target.txt";
-    private static final String configKernelFile = "config_kernel.txt";
+    private static final Log    log                 = LogFactory.getLog(StubAracneInputRepository.class);
+	private static final String ARACNEROOT          = "/ifs/data/c2b2/af_lab/cagrid/r/aracne/runs/";
+	private static final String ARACNEBIN           = "/ifs/data/c2b2/af_lab/cagrid/r/aracne/bin/";
+	private static final String adjsDir             = "adjfiles";
+	private static final String logsDir             = "logs";
+    private static final String aracneLog           = "aracne.log";
+    private static final String consensusLog        = "consensus.log";
+    private static final String configLog           = "config.log";
+    private static final String hubFile             = "hub.txt";
+    private static final String targetFile          = "target.txt";
+    private static final String configKernelFile    = "config_kernel.txt";
     private static final String configThresholdFile = "config_threshold.txt";
-	private static final String aracneFile ="aracne_submit.sh";
-	private static final String consensusFile ="consensus_submit.sh";
-	private static final String aracneBinName="aracne2";
-	private static final String consensusBinName="getconsensusnet.pl";
-    private static final Random random = new Random();
-    private static final long   POLL_INTERVAL = 20000; //20 seconds
-	private static final String maxmem = "2G";
-	private static final String timeout = "4::";
-	private static final String configKernel = "> bcell_mas5\n0.52477\t-0.24\n";
-	private static final String configThreshold = "> bcell_mas5\n1.062\t-48.7\t-0.634\n";
+	private static final String aracneFile          = "aracne_submit.sh";
+	private static final String consensusFile       = "consensus_submit.sh";
+	private static final String configSh            = "config_submit.sh";
+	private static final String configMat           = "running_config.m";
+	private static final String kernelFunc          = "generate_kernel_width_configuration";
+	private static final String thresholdFunc       = "generate_mutual_threshold_configuration";
+	private static final String aracneBinName       = "aracne2";
+	private static final String consensusBinName    = "getconsensusnet.pl";
+    private static final Random random              = new Random();
+    private static final long   POLL_INTERVAL       = 20000; //20 seconds
+	private static final String maxmem              = "6G";
+	private static final String timeout             = "48::";
+	private static final String configKernel        = "> bcell_mas5\n0.52477\t-0.24\n";
+	private static final String configThreshold     = "> bcell_mas5\n1.062\t-48.7\t-0.634\n";
 
 	@Override
 	public String storeAracneInput(AracneInput input) throws RemoteException{
-		String runId = getRunId();
+		String runId = getRunId("ara");
 		String aracneDir = ARACNEROOT+runId+"/";
     	if (runId==null) {
     		throw new RemoteException("Not able to create Aracne run directory on server:\n"+aracneDir);
     	}
 
-    	if(!input.getMode().equals("Discovery")) throw new RemoteException("Not supported yet");
+    	if(input.getMode().equals("Complete")) throw new RemoteException("Not supported yet");
     	
     	exportExp(input.getExpFile(), input.getDataSetName(), aracneDir);
     	writeToFile(input.getHubGeneList(),          hubFile, aracneDir);
@@ -68,8 +75,22 @@ public class StubAracneInputRepository implements AracneInputRepository {
 
 		return runId;
 	}
+	
+	@Override
+	public String storeConfigInput(AracneInput input) throws RemoteException{
+		String runId = getRunId("cfg");
+		String aracneDir = ARACNEROOT+runId+"/";
+    	if (runId==null) {
+    		throw new RemoteException("Not able to create Aracne run directory on server:\n"+aracneDir);
+    	}
+    	
+    	exportExp(input.getExpFile(), input.getDataSetName(), aracneDir);
+    	writeToFile(prepareConfigSh(runId),  configSh, aracneDir);
+    	writeToFile(prepareConfigMat(input), configMat, aracneDir);
+    	return runId;
+	}
 
-	private String getRunId(){
+	private String getRunId(String code){
 		File root = new File(ARACNEROOT);
 		if (!root.exists() && !root.mkdir()) return null;
 
@@ -77,7 +98,7 @@ public class StubAracneInputRepository implements AracneInputRepository {
 		String runid = null;
 		File randdir = null;
 		do {
-			runid = "ara" + random.nextInt(Short.MAX_VALUE);
+			runid = code + random.nextInt(Short.MAX_VALUE);
 			randdir = new File(ARACNEROOT + runid + "/");
 		} while (randdir.exists() && ++i < Short.MAX_VALUE);
 		
@@ -156,7 +177,7 @@ public class StubAracneInputRepository implements AracneInputRepository {
 		return builder.toString();
 	}
 	
-	String prepareConsensus(AracneInput input, String runId){
+	private String prepareConsensus(AracneInput input, String runId){
 		StringBuilder builder = new StringBuilder();
 		builder.append("#!/bin/bash\n#$ -l mem="+maxmem+",time="+timeout);
 		builder.append(" -cwd -j y -o ").append(ARACNEROOT+runId+"/"+consensusLog).append(" -N ").append(runId)
@@ -170,6 +191,29 @@ public class StubAracneInputRepository implements AracneInputRepository {
 		.append(input.getConsensusThreshold());
 		//.append("\nrm -rf \"$ADJ\" \"$LOGS\"");
 		
+		return builder.toString();
+	}
+
+	private String prepareConfigSh(String runId){
+		StringBuilder builder = new StringBuilder();
+		builder.append("#!/bin/bash\n#$ -l mem="+maxmem+",time="+timeout)
+		.append(" -cwd -j y -o ").append(ARACNEROOT+runId+"/"+configLog).append(" -N ").append(runId)
+		.append("\ncd ").append(ARACNEROOT+runId)
+		.append("\n\n/nfs/apps/matlab/2012a/bin/matlab -nodisplay -nodesktop -nosplash < ")
+		.append(configMat);
+
+		return builder.toString();
+	}
+	
+	private String prepareConfigMat(AracneInput input){
+		StringBuilder builder = new StringBuilder("clc\nclear\n");
+	    builder.append("src_dir = '").append(ARACNEBIN).append("';\n")
+		.append("addpath(src_dir)\n")
+		.append("filename_exp = '").append(input.getDataSetName()).append("';\n")
+		.append("method = '").append(input.getAlgorithm().toLowerCase().replaceAll(" ", "_")).append("';\n")
+		.append("data = importdata(filename_exp);\n")
+		.append(kernelFunc).append("(data.data);\n")
+		.append(thresholdFunc).append("(data.data, method);\n");
 		return builder.toString();
 	}
 	
@@ -206,6 +250,32 @@ public class StubAracneInputRepository implements AracneInputRepository {
 		return output;
 	}
 	
+	@Override
+	public AracneConfig executeConfig(String runId) throws RemoteException{
+		String aracneDir = ARACNEROOT + runId + "/";
+		int ret = submitJob(aracneDir + configSh);
+		log.info("SubmitJob aracne config returns: "+ret);
+
+		waitForJob(runId);
+		
+		File kernelFile = new File(aracneDir + configKernelFile);
+		File thresholdFile = new File(aracneDir + configThresholdFile);
+		if (!thresholdFile.exists()){
+		    String err = null;
+		    if ((err = runError(aracneDir + configLog)) != null)
+		    	throw new RemoteException("Aracne config run for "+runId+" got error:\n"+err);
+		    else
+		    	throw new RemoteException("Aracne config run for "+runId+" was killed unexpectedly");
+		}
+
+		AracneConfig config = new AracneConfig();
+		config.setName(runId);
+		config.getKernel().addAll(getConfig(kernelFile));
+		config.getThreshold().addAll(getConfig(thresholdFile));
+
+		return config;
+	}
+		
 	private void waitForJob(String runId) throws RemoteException{
 		try{
 	    	Thread.sleep(POLL_INTERVAL*3); //wait for a minute before polling results
@@ -229,6 +299,33 @@ public class StubAracneInputRepository implements AracneInputRepository {
 		}
 		return null;
 	}
+	
+	private ArrayList<Float> getConfig(File file){
+		ArrayList<Float> list = new ArrayList<Float>();
+		if(!file.exists()) return list;
+		BufferedReader br = null;
+		try{
+			br = new BufferedReader(new FileReader(file));
+			String line = null;
+			while((line = br.readLine()) != null){
+				if (line.trim().length() == 0 || line.startsWith(">"))
+					continue;
+				for(String tok : line.split("\t")){
+					list.add(Float.parseFloat(tok));
+				}
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+			list.clear();
+		}finally{
+			try{
+				if (br!=null) br.close();
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+		}
+		return list;
+	}
 
 	private int submitJob(java.lang.String jobfile) throws RemoteException{
 		String command = "qsub " + jobfile;
@@ -247,7 +344,7 @@ public class StubAracneInputRepository implements AracneInputRepository {
 	}
 	
 	private boolean isJobDone(String runid) throws RemoteException {
-		String cmd = "qstat -u "+account;
+		String cmd = "qstat";
 		BufferedReader brIn = null;
 		BufferedReader brErr = null;
 		try{
@@ -272,6 +369,34 @@ public class StubAracneInputRepository implements AracneInputRepository {
 			}
 		}
 		return true;
+	}
+
+	private String runError(String logfname){
+		StringBuilder str = new StringBuilder();
+		BufferedReader br = null;
+		boolean error = false;
+		File logFile = new File(logfname);
+		if (!logFile.exists()) return null;
+		try{
+			br = new BufferedReader(new FileReader(logFile));
+			String line = null;
+			while((line = br.readLine())!=null){
+				if (line.contains("error")||line.contains("Error")){
+					str.append(line + "\n");
+					error = true;
+				}
+			}
+		}catch(IOException e){
+			e.printStackTrace();
+		}finally{
+			try{
+				if (br!=null) br.close();
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+		}
+		if (error)  return str.toString();
+		return null;
 	}
 
 	public static class StreamGobbler extends Thread
