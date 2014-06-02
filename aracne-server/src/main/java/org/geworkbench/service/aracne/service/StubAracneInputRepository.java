@@ -62,13 +62,19 @@ public class StubAracneInputRepository implements AracneInputRepository {
     		throw new RemoteException("Not able to create Aracne run directory on server:\n"+aracneDir);
     	}
 
-    	if(input.getMode().equals("Complete")) throw new RemoteException("Not supported yet");
+    	if(input.getMode().equals("Complete")){
+    		//complete mode: generate configuration
+    		writeToFile(prepareConfigSh(runId),     configSh, aracneDir);
+        	writeToFile(prepareConfigMat(input),   configMat, aracneDir);
+    	}else{
+    		//discovery mode: use default configuration
+	    	writeToFile(configKernel,       configKernelFile, aracneDir);
+	    	writeToFile(configThreshold, configThresholdFile, aracneDir);
+    	}
     	
     	exportExp(input.getExpFile(), input.getDataSetName(), aracneDir);
     	writeToFile(input.getHubGeneList(),          hubFile, aracneDir);
     	writeToFile(input.getTargetGeneList(),    targetFile, aracneDir);
-    	writeToFile(configKernel,           configKernelFile, aracneDir);
-    	writeToFile(configThreshold,     configThresholdFile, aracneDir);
     	writeToFile(prepareAracne(input, runId),  aracneFile, aracneDir);
 		if(input.getBootstrapNumber() > 1)
 			writeToFile(prepareConsensus(input, runId), consensusFile, aracneDir);
@@ -218,7 +224,9 @@ public class StubAracneInputRepository implements AracneInputRepository {
 	}
 	
 	@Override
-	public AracneOutput execute(String runId, int nboot) throws RemoteException{
+	public AracneOutput execute(String runId, int nboot, String mode) throws RemoteException{
+		if(mode.equals("Complete")) executeConfig(runId);
+
 		AracneOutput output = new AracneOutput();
         output.setAdjName(runId);
 

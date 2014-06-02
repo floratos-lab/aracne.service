@@ -10,7 +10,7 @@ public interface AracneInputRepository {
     String storeAracneInput(AracneInput input) throws RemoteException;
     String storeConfigInput(AracneInput input) throws RemoteException;
 
-    AracneOutput execute(String dataDir, int nboot) throws RemoteException;
+    AracneOutput execute(String dataDir, int nboot, String mode) throws RemoteException;
     AracneConfig executeConfig(String dataDir) throws RemoteException;
 
 }
