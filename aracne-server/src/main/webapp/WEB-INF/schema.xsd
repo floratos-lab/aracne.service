@@ -29,6 +29,8 @@
 			<element name="targetGeneList" type="string"/>
 			<element name="bootstrapNumber" type="int"/>
 			<element name="consensusThreshold" type="float"/>
+			<element name="configKernel" type="string"/>
+			<element name="configThreshold" type="string"/>
         </sequence>
     </complexType>
 

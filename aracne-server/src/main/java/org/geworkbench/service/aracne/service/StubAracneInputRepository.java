@@ -67,9 +67,13 @@ public class StubAracneInputRepository implements AracneInputRepository {
     		writeToFile(prepareConfigSh(runId),     configSh, aracneDir);
         	writeToFile(prepareConfigMat(input),   configMat, aracneDir);
     	}else{
-    		//discovery mode: use default configuration
-	    	writeToFile(configKernel,       configKernelFile, aracneDir);
-	    	writeToFile(configThreshold, configThresholdFile, aracneDir);
+    		//discovery mode: use default or customized configuration
+    		String config_kernel    = input.getConfigKernel();
+    		String config_threshold = input.getConfigThreshold();
+    		if(config_kernel.equals(""))       config_kernel = configKernel;
+    		if(config_threshold.equals("")) config_threshold = configThreshold;
+	    	writeToFile(config_kernel,      configKernelFile, aracneDir);
+	    	writeToFile(config_threshold,configThresholdFile, aracneDir);
     	}
     	
     	exportExp(input.getExpFile(), input.getDataSetName(), aracneDir);
