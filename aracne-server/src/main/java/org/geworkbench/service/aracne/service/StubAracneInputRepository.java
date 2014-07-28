@@ -53,6 +53,7 @@ public class StubAracneInputRepository implements AracneInputRepository {
 	private static final String timeout             = "48::";
 	private static final String configKernel        = "> bcell_mas5\n0.52477\t-0.24\n";
 	private static final String configThreshold     = "> bcell_mas5\n1.062\t-48.7\t-0.634\n";
+	private static final String adaptivePartitioning = "Adaptive Partitioning";
 
 	@Override
 	public String storeAracneInput(AracneInput input) throws RemoteException{
@@ -70,9 +71,12 @@ public class StubAracneInputRepository implements AracneInputRepository {
     		//discovery mode: use default or customized configuration
     		String config_kernel    = input.getConfigKernel();
     		String config_threshold = input.getConfigThreshold();
-    		if(config_kernel == null || config_kernel.equals(""))       config_kernel = configKernel;
-    		if(config_threshold == null || config_threshold.equals("")) config_threshold = configThreshold;
-	    	writeToFile(config_kernel,      configKernelFile, aracneDir);
+    		if (!input.getAlgorithm().equalsIgnoreCase(adaptivePartitioning))
+    		{
+    		   if(config_kernel == null || config_kernel.equals(""))       config_kernel = configKernel;
+    		   writeToFile(config_kernel,      configKernelFile, aracneDir);
+    		}
+    		if(config_threshold == null || config_threshold.equals("")) config_threshold = configThreshold;	    
 	    	writeToFile(config_threshold,configThresholdFile, aracneDir);
     	}
     	
@@ -221,15 +225,16 @@ public class StubAracneInputRepository implements AracneInputRepository {
 		.append("addpath(src_dir)\n")
 		.append("filename_exp = '").append(input.getDataSetName()).append("';\n")
 		.append("method = '").append(input.getAlgorithm().toLowerCase().replaceAll(" ", "_")).append("';\n")
-		.append("data = importdata(filename_exp);\n")
-		.append(kernelFunc).append("(data.data);\n")
-		.append(thresholdFunc).append("(data.data, method);\n");
+		.append("data = importdata(filename_exp);\n");	 
+	    if (input.getAlgorithm().toLowerCase().contains("fixed bandwidth"))	    	
+	    	builder.append(kernelFunc).append("(data.data);\n");
+		builder.append(thresholdFunc).append("(data.data, method);\n");    
 		return builder.toString();
 	}
 	
 	@Override
-	public AracneOutput execute(String runId, int nboot, String mode) throws RemoteException{
-		if(mode.equals("Complete")) executeConfig(runId);
+	public AracneOutput execute(String runId, int nboot, String mode, String algorithm) throws RemoteException{
+		if(mode.equals("Complete")) executeConfig(runId, algorithm);
 
 		AracneOutput output = new AracneOutput();
         output.setAdjName(runId);
@@ -263,7 +268,7 @@ public class StubAracneInputRepository implements AracneInputRepository {
 	}
 	
 	@Override
-	public AracneConfig executeConfig(String runId) throws RemoteException{
+	public AracneConfig executeConfig(String runId, String algorithm) throws RemoteException{
 		String aracneDir = ARACNEROOT + runId + "/";
 		int ret = submitJob(aracneDir + configSh);
 		log.info("SubmitJob aracne config returns: "+ret);
@@ -281,8 +286,15 @@ public class StubAracneInputRepository implements AracneInputRepository {
 		}
 
 		AracneConfig config = new AracneConfig();
-		config.setName(runId);
-		config.getKernel().addAll(getConfig(kernelFile));
+		if (algorithm.equalsIgnoreCase(adaptivePartitioning))
+		     config.setName("AP - " + runId);
+		else
+		{
+			config.setName("FB - " + runId);
+			config.getKernel().addAll(getConfig(kernelFile));
+		}
+		
+		
 		config.getThreshold().addAll(getConfig(thresholdFile));
 
 		return config;

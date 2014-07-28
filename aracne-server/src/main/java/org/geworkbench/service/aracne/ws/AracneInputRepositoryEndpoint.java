@@ -35,7 +35,7 @@ public class AracneInputRepositoryEndpoint {
 
         String runId = aracneInputRepository.storeAracneInput(request);
         
-       	output = aracneInputRepository.execute(runId, request.getBootstrapNumber(), request.getMode());
+       	output = aracneInputRepository.execute(runId, request.getBootstrapNumber(), request.getMode(), request.getAlgorithm());
         
         return objectFactory.createExecuteAracneResponse(output);
     }
@@ -48,7 +48,7 @@ public class AracneInputRepositoryEndpoint {
 
         String runId = aracneInputRepository.storeConfigInput(request);
         
-       	output = aracneInputRepository.executeConfig(runId);
+       	output = aracneInputRepository.executeConfig(runId, request.getAlgorithm());
         
         return objectFactory.createExecuteAracneConfigResponse(output);
     }
