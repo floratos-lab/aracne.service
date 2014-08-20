@@ -13,6 +13,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Random;
 
 import javax.activation.DataHandler;
@@ -25,11 +26,17 @@ import org.geworkbench.service.aracne.schema.AracneConfig;
 import org.geworkbench.service.aracne.schema.AracneInput;
 import org.geworkbench.service.aracne.schema.AracneOutput;
 
-
+/* FIXME naming of this class and the interface AracneInputRepository is very questionable. */
 public class StubAracneInputRepository implements AracneInputRepository {
     private static final Log    log                 = LogFactory.getLog(StubAracneInputRepository.class);
-	private static final String ARACNEROOT          = "/ifs/data/c2b2/af_lab/cagrid/r/aracne/runs/";
-	private static final String ARACNEBIN           = "/ifs/data/c2b2/af_lab/cagrid/r/aracne/bin/";
+    
+	private static final String SGE_CLUSTER_NAME = "hpc";
+	private static final String SGE_ROOT = "/opt/gridengine/"+SGE_CLUSTER_NAME;
+	
+	private static final String USER_HOME = "/ifs/data/c2b2/af_lab/cagrid/";
+	private static final String ARACNE_RUNS_DIR = USER_HOME+"r/aracne/runs/";
+	private static final String ARACNEBIN           = USER_HOME+"r/aracne/bin/";
+	
 	private static final String adjsDir             = "adjfiles";
 	private static final String logsDir             = "logs";
     private static final String aracneLog           = "aracne.log";
@@ -58,7 +65,7 @@ public class StubAracneInputRepository implements AracneInputRepository {
 	@Override
 	public String storeAracneInput(AracneInput input) throws RemoteException{
 		String runId = getRunId("ara");
-		String aracneDir = ARACNEROOT+runId+"/";
+		String aracneDir = ARACNE_RUNS_DIR+runId+"/";
     	if (runId==null) {
     		throw new RemoteException("Not able to create Aracne run directory on server:\n"+aracneDir);
     	}
@@ -93,7 +100,7 @@ public class StubAracneInputRepository implements AracneInputRepository {
 	@Override
 	public String storeConfigInput(AracneInput input) throws RemoteException{
 		String runId = getRunId("cfg");
-		String aracneDir = ARACNEROOT+runId+"/";
+		String aracneDir = ARACNE_RUNS_DIR+runId+"/";
     	if (runId==null) {
     		throw new RemoteException("Not able to create Aracne run directory on server:\n"+aracneDir);
     	}
@@ -105,7 +112,7 @@ public class StubAracneInputRepository implements AracneInputRepository {
 	}
 
 	private String getRunId(String code){
-		File root = new File(ARACNEROOT);
+		File root = new File(ARACNE_RUNS_DIR);
 		if (!root.exists() && !root.mkdir()) return null;
 
 		int i = 0;
@@ -113,7 +120,7 @@ public class StubAracneInputRepository implements AracneInputRepository {
 		File randdir = null;
 		do {
 			runid = code + random.nextInt(Short.MAX_VALUE);
-			randdir = new File(ARACNEROOT + runid + "/");
+			randdir = new File(ARACNE_RUNS_DIR + runid + "/");
 		} while (randdir.exists() && ++i < Short.MAX_VALUE);
 		
 		if (i < Short.MAX_VALUE && randdir.mkdir())
@@ -158,19 +165,19 @@ public class StubAracneInputRepository implements AracneInputRepository {
 	private String prepareAracne(AracneInput input, String runId){
 		int nboot = input.getBootstrapNumber();
 		if(nboot>1){
-			new File(ARACNEROOT+runId+"/"+logsDir).mkdir();
-			new File(ARACNEROOT+runId+"/"+adjsDir).mkdir();
+			new File(ARACNE_RUNS_DIR+runId+"/"+logsDir).mkdir();
+			new File(ARACNE_RUNS_DIR+runId+"/"+adjsDir).mkdir();
 		}
 		
 		StringBuilder builder = new StringBuilder();
 		builder.append("#!/bin/bash\n#$ -l mem="+maxmem+",time="+timeout);
 		if(nboot > 1) builder.append(" -t 1-").append(nboot);
-		builder.append(" -cwd -j y -o ").append(ARACNEROOT+runId+"/"+aracneLog).append(" -N ").append(runId)
+		builder.append(" -cwd -j y -o ").append(ARACNE_RUNS_DIR+runId+"/"+aracneLog).append(" -N ").append(runId)
 		.append("\nexport JOBNAME=\"").append(runId)
 		.append("\"\nexport INFILE=\"").append(input.getDataSetName())
 		.append("\"\nexport HUBFILE=\"").append(hubFile)
 		.append("\"\nexport BINDIR=\"").append(ARACNEBIN)
-		.append("\"\nexport JOBDIR=\"").append(ARACNEROOT).append("$JOBNAME")
+		.append("\"\nexport JOBDIR=\"").append(ARACNE_RUNS_DIR).append("$JOBNAME")
 		.append("\"\nexport LOGS=\"").append(logsDir)
 		.append("\"\nexport ADJ=\"").append(adjsDir)
 		.append("\"\n\ncd \"$JOBDIR\"\n")
@@ -194,10 +201,10 @@ public class StubAracneInputRepository implements AracneInputRepository {
 	private String prepareConsensus(AracneInput input, String runId){
 		StringBuilder builder = new StringBuilder();
 		builder.append("#!/bin/bash\n#$ -l mem="+maxmem+",time="+timeout);
-		builder.append(" -cwd -j y -o ").append(ARACNEROOT+runId+"/"+consensusLog).append(" -N ").append(runId)
+		builder.append(" -cwd -j y -o ").append(ARACNE_RUNS_DIR+runId+"/"+consensusLog).append(" -N ").append(runId)
 		.append("\nexport JOBNAME=\"").append(runId)
 		.append("\"\nexport BINDIR=\"").append(ARACNEBIN)
-		.append("\"\nexport JOBDIR=\"").append(ARACNEROOT).append("$JOBNAME")
+		.append("\"\nexport JOBDIR=\"").append(ARACNE_RUNS_DIR).append("$JOBNAME")
 		.append("\"\nexport LOGS=\"").append(logsDir)
 		.append("\"\nexport ADJ=\"").append(adjsDir)
 		.append("\"\n\ncd \"$JOBDIR\"\n")
@@ -211,8 +218,8 @@ public class StubAracneInputRepository implements AracneInputRepository {
 	private String prepareConfigSh(String runId){
 		StringBuilder builder = new StringBuilder();
 		builder.append("#!/bin/bash\n#$ -l mem="+maxmem+",time="+timeout)
-		.append(" -cwd -j y -o ").append(ARACNEROOT+runId+"/"+configLog).append(" -N ").append(runId)
-		.append("\ncd ").append(ARACNEROOT+runId)
+		.append(" -cwd -j y -o ").append(ARACNE_RUNS_DIR+runId+"/"+configLog).append(" -N ").append(runId)
+		.append("\ncd ").append(ARACNE_RUNS_DIR+runId)
 		.append("\n\n/nfs/apps/matlab/2012a/bin/matlab -nodisplay -nodesktop -nosplash < ")
 		.append(configMat);
 
@@ -239,7 +246,7 @@ public class StubAracneInputRepository implements AracneInputRepository {
 		AracneOutput output = new AracneOutput();
         output.setAdjName(runId);
 
-		String aracneDir = ARACNEROOT + runId + "/";
+		String aracneDir = ARACNE_RUNS_DIR + runId + "/";
 		int ret = submitJob(aracneDir + aracneFile);
 		log.info("SubmitJob aracne returns: "+ret);
 
@@ -269,7 +276,7 @@ public class StubAracneInputRepository implements AracneInputRepository {
 	
 	@Override
 	public AracneConfig executeConfig(String runId, String algorithm) throws RemoteException{
-		String aracneDir = ARACNEROOT + runId + "/";
+		String aracneDir = ARACNE_RUNS_DIR + runId + "/";
 		int ret = submitJob(aracneDir + configSh);
 		log.info("SubmitJob aracne config returns: "+ret);
 
@@ -352,10 +359,15 @@ public class StubAracneInputRepository implements AracneInputRepository {
 	}
 
 	private int submitJob(java.lang.String jobfile) throws RemoteException{
-		String command = "qsub " + jobfile;
+		String[] command = {SGE_ROOT+"/bin/lx-amd64/qsub", jobfile};
 		System.out.println(command);
 		try {
-			Process p = Runtime.getRuntime().exec(command);
+			ProcessBuilder pb = new ProcessBuilder(command);
+			Map<String, String> env = pb.environment();
+			env.put("SGE_ROOT", SGE_ROOT);
+			env.put("SGE_CLUSTER_NAME", SGE_CLUSTER_NAME);
+			env.put("PATH", SGE_ROOT+"/bin/lx-amd64:$PATH");
+			Process p = pb.start();
 			StreamGobbler out = new StreamGobbler(p.getInputStream(), "INPUT");
 			StreamGobbler err = new StreamGobbler(p.getErrorStream(), "ERROR");
 			out.start();
@@ -368,11 +380,16 @@ public class StubAracneInputRepository implements AracneInputRepository {
 	}
 	
 	private boolean isJobDone(String runid) throws RemoteException {
-		String cmd = "qstat";
+		String cmd = SGE_ROOT+"/bin/lx-amd64/qstat";
 		BufferedReader brIn = null;
 		BufferedReader brErr = null;
 		try{
-			Process p = Runtime.getRuntime().exec(cmd);
+			ProcessBuilder pb = new ProcessBuilder(cmd);
+			Map<String, String> env = pb.environment();
+			env.put("SGE_ROOT", SGE_ROOT);
+			env.put("SGE_CLUSTER_NAME", SGE_CLUSTER_NAME);
+			env.put("PATH", SGE_ROOT+"/bin/lx-amd64:$PATH");
+			Process p = pb.start();
 			brIn = new BufferedReader(new InputStreamReader(p.getInputStream()));
 			brErr = new BufferedReader(new InputStreamReader(p.getErrorStream()));
 			String line = null;
