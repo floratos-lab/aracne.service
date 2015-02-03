@@ -11,6 +11,8 @@
 
     <element name="ExecuteAracneConfigResponse" type="tns:AracneConfig"/>
 
+    <element name="PreprocessRequest" type="tns:AracnePreprocessInput"/>
+    
     <complexType name="AracneInput">
         <sequence>
         	<element name="dataSetName" type="string"/>
@@ -34,6 +36,15 @@
         </sequence>
     </complexType>
 
+    <complexType name="AracnePreprocessInput">
+        <sequence>
+        	<element name="dataSetName" type="string"/>
+			<element name="dataSetIdentifier" type="string"/>
+            <element name="expFile" type="base64Binary" xmime:expectedContentTypes="application/octet-stream"/>
+			<element name="algorithm" type="string"/>
+        </sequence>
+    </complexType>
+    
 	<complexType name="AracneGraphEdge">
         <sequence>
         	<element name="node1" type="string"/>
