@@ -13,9 +13,6 @@ import org.geworkbench.service.aracne.schema.AracnePreprocessInput;
 public class PreprocessImpl implements Preprocess {
 	private static final Log    log                 = LogFactory.getLog(PreprocessImpl.class);
 	
-	private static final String USER_HOME = "/ifs/data/c2b2/af_lab/cagrid/";
-	private static final String ARACNE_RUNS_DIR = USER_HOME+"r/aracne/runs/";
-
 	private static final String configKernelFile    = "config_kernel.txt";
     private static final String configThresholdFile = "config_threshold.txt";
     private static final String configLog           = "config.log";
@@ -28,7 +25,7 @@ public class PreprocessImpl implements Preprocess {
     AracneConfig execute(AracnePreprocessInput input, String algorithm) throws RemoteException {
 		// step 1: store input
 		String runId = Utils.getRunId("cfg");
-		String aracneDir = ARACNE_RUNS_DIR+runId+"/";
+		String aracneDir = Utils.ARACNE_RUNS_DIR+runId+"/";
     	if (runId==null) {
     		throw new RemoteException("Not able to create Aracne run directory on server:\n"+aracneDir);
     	}

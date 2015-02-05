@@ -2,14 +2,14 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
 
-    <bean id="aracneInputRepository" class="org.geworkbench.service.aracne.service.StubAracneInputRepository"/>
-    <bean id="aracnePreprocessingImpl" class="org.geworkbench.service.aracne.service.PreprocessImpl"/>
+    <bean id="aracneDiscovery" class="org.geworkbench.service.aracne.service.DiscoveryImpl"/>
+    <bean id="aracnePreprocessing" class="org.geworkbench.service.aracne.service.PreprocessImpl"/>
 
-    <bean class="org.geworkbench.service.aracne.ws.AracneInputRepositoryEndpoint">
-        <constructor-arg ref="aracneInputRepository"/>
+    <bean class="org.geworkbench.service.aracne.ws.DiscoveryEndpoint">
+        <constructor-arg ref="aracneDiscovery"/>
     </bean>
     <bean class="org.geworkbench.service.aracne.ws.PreprocessEndpoint">
-        <constructor-arg ref="aracnePreprocessingImpl"/>
+        <constructor-arg ref="aracnePreprocessing"/>
     </bean>
 
     <bean class="org.springframework.ws.server.endpoint.mapping.PayloadRootAnnotationMethodEndpointMapping"/>
@@ -30,12 +30,12 @@
 
     <bean id="aracne" class="org.springframework.ws.wsdl.wsdl11.DefaultWsdl11Definition">
         <property name="schema" ref="schema"/>
-        <property name="portTypeName" value="aracneInputRepository"/>
+        <property name="portTypeName" value="aracneDiscovery"/>
         <property name="locationUri" value="http://localhost:8080/aracne-server/"/>
     </bean>
     <bean id="preprocess" class="org.springframework.ws.wsdl.wsdl11.DefaultWsdl11Definition">
         <property name="schema" ref="schema"/>
-        <property name="portTypeName" value="aracnePreprocessingImpl"/>
+        <property name="portTypeName" value="aracnePreprocessing"/>
         <property name="locationUri" value="http://localhost:8080/aracne-server/"/>
     </bean>
 

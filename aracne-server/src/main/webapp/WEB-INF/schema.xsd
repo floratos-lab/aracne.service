@@ -3,16 +3,14 @@
         xmlns:tns="http://www.geworkbench.org/service/aracne"
         xmlns:xmime="http://www.w3.org/2005/05/xmlmime" elementFormDefault="qualified">
 
-    <element name="ExecuteAracneRequest" type="tns:AracneInput"/>
+    <element name="DiscoveryRequest" type="tns:AracneInput"/>
 
     <element name="ExecuteAracneResponse" type="tns:AracneOutput"/>
     
-    <element name="ExecuteAracneConfigRequest" type="tns:AracneInput"/>
-
-    <element name="ExecuteAracneConfigResponse" type="tns:AracneConfig"/>
-
     <element name="PreprocessRequest" type="tns:AracnePreprocessInput"/>
     
+    <element name="ExecuteAracneConfigResponse" type="tns:AracneConfig"/>
+
     <complexType name="AracneInput">
         <sequence>
         	<element name="dataSetName" type="string"/>
@@ -45,14 +43,6 @@
         </sequence>
     </complexType>
     
-	<complexType name="AracneGraphEdge">
-        <sequence>
-        	<element name="node1" type="string"/>
-        	<element name="node2" type="string"/>
-        	<element name="weight" type="float"/>
-        </sequence>
-    </complexType>
-        	
     <complexType name="AracneOutput">
         <sequence>
 	        <element name="adjName" type="string"/>
