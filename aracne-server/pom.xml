@@ -10,6 +10,7 @@
           <plugin>
               <groupId>org.codehaus.mojo</groupId>
               <artifactId>jaxb2-maven-plugin</artifactId>
+              <version>1.6</version>
               <executions>
                   <execution>
                       <goals>
@@ -34,7 +35,7 @@
 	   </plugin>
          
       </plugins>
-      <finalName>${artifactId}</finalName>
+      <finalName>${project.artifactId}</finalName>
    </build>
    
 	<dependencies>

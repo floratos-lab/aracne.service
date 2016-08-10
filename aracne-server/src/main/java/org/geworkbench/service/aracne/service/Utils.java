@@ -23,6 +23,17 @@ import org.geworkbench.service.aracne.schema.AracnePreprocessInput;
 
 /* Collection of the static methods used by the other classes in this package. */
 public class Utils {
+	
+	static {
+		InputStream reader = null;
+		try {
+			reader = Utils.class.getResourceAsStream("/application.properties");
+			System.getProperties().load(reader);
+			reader.close();
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+		}
+	}
 
 	private static final String SGE_CLUSTER_NAME = "hpc";
 	private static final String SGE_ROOT = "/opt/gridengine/"+SGE_CLUSTER_NAME;
@@ -48,6 +59,7 @@ public class Utils {
 	private static final String aracneBinName       = "aracne2";
 	private static final String consensusLog        = "consensus.log";
 	private static final String consensusBinName    = "getconsensusnet.pl";
+	private static final String MATLAB_PATH         = System.getProperty("matlab.path");
 
 	public static String getRunId(String code){
 		File root = new File(ARACNE_RUNS_DIR);
@@ -88,8 +100,8 @@ public class Utils {
 		builder.append("#!/bin/bash\n#$ -l mem="+maxmem+",time="+timeout)
 		.append(" -cwd -j y -o ").append(ARACNE_RUNS_DIR+runId+"/"+configLog).append(" -N ").append(runId)
 		.append("\ncd ").append(ARACNE_RUNS_DIR+runId)
-		.append("\n\n/nfs/apps/matlab/2012a/bin/matlab -nodisplay -nodesktop -nosplash < ")
-		.append(configMat);
+		.append('\n').append(MATLAB_PATH).append(" -nodisplay -nodesktop -nosplash < ")
+		.append(configMat).append('\n');
 
 		return builder.toString();
 	}
